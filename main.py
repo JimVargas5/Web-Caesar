@@ -26,6 +26,7 @@ form = """
                     width: 540px;
                     height: 120px;
                 }}
+                .error {{ color: red }}
             </style>
         </head>
         <body>
@@ -33,9 +34,9 @@ form = """
                 <label> Rotate by: 
                     <input name= "rot" type= "text" value= '0' />
                 </label>
-            
+                <p class= "error"> {rot_error} </p>
                 <label> Text to encrypt:
-                    <textarea name= "text" >{0}</textarea>
+                    <textarea name= "text" >{new}</textarea>
                 </label>
                 <input type= "submit" value= "DoTheThing" />
             </form>
@@ -46,26 +47,37 @@ form = """
 @app.route("/")
 def index():
     new = ""
-    return form.format(new)
+    rot_error = ""
+    return form.format(rot_error= rot_error, new= new)
+
+
+def IsInteger(num):
+    try:
+        int(num)
+        return True
+    except ValueError:
+        return False
 
 
 @app.route("/", methods= ['POST'])
 def encrypt():
-    rot = int(
-        cgi.escape(
-            request.form['rot']
-            )
-        )
+    rot = cgi.escape(
+        request.form['rot'])
     text = cgi.escape(
-        request.form['text']
-    )
-    new = rotate_string(text, rot)
+        request.form['text'])
 
-    SpitThing = ("<h1>The thing you entered:</h1>" + 
-        "<p>" + text + "</p>" +
-        "<h1>Your encrypted text:</h1>" + 
-        "<p>" + new + "</p>")
+    rot_error = ""
 
-    return form.format(new)
+    if not IsInteger(rot):
+        rot_error= "Not a valid integer"
+        rot = ""
+    else:
+        rot = int(rot)
+
+    if not rot_error:
+        new = rotate_string(text, rot)
+        return form.format(rot_error="", new= new)
+    else:
+        return form.format(rot_error= rot_error, new= text)
 
 app.run()
